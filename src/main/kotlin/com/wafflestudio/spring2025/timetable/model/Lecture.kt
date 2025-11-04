@@ -19,6 +19,7 @@ class Lecture (
     var courseSubtitle: String,
     var credit: Int,
     var classTimeText: String,
+    var classTypeText: String,
     var location: String,
     var instructor: String,
     var remark: String,

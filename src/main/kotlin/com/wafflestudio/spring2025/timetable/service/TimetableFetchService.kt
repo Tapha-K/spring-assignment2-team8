@@ -2,6 +2,7 @@ package com.wafflestudio.spring2025.timetable.service
 
 import com.wafflestudio.spring2025.timetable.model.Lecture
 import com.wafflestudio.spring2025.timetable.enum.Semester
+import com.wafflestudio.spring2025.timetable.model.LectureTime
 import com.wafflestudio.spring2025.timetable.repository.LectureRepository
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.springframework.core.io.buffer.DataBuffer
@@ -53,6 +54,7 @@ class TimetableFetchService(private val lectureRepository: LectureRepository) {
                     courseSubtitle = row.getCell(8).toString(),
                     credit = row.getCell(9).toString().toInt(),
                     classTimeText = row.getCell(12).toString(),
+                    classTypeText = row.getCell(13).toString(),
                     location = row.getCell(14).toString(),
                     instructor = row.getCell(15).toString(),
                     remark = row.getCell(21).toString(),
@@ -78,6 +80,30 @@ class TimetableFetchService(private val lectureRepository: LectureRepository) {
             Semester.AUTUMN -> "U000200002U000300001"
             Semester.WINTER -> "U000200002U000300002"
         }
+
+    private fun getLectureTimes(lecture: Lecture): ArrayList<LectureTime> {
+        val result = ArrayList<LectureTime>()
+        val classTimes = lecture.classTimeText.split("/").map {
+            mapOf(
+                "day" to it[0],
+                "startTime" to it.substring(2, 4).toInt() * 60 + it.substring(5, 7).toInt(),
+                "endTime" to it.substring(8, 10).toInt() * 60 + it.substring(11, 13).toInt(),
+            )
+        }
+        val classTypes = lecture.classTypeText.split("/")
+        val classLocations = lecture.location.split("/")
+
+        for (i in 0 until classTimes.count()) {
+            result.add(LectureTime(
+                // lectureid 어떻게 처리?
+                dayOfWeek = classTimes[i]["day"],
+                startTime = classTimes[i]["startTime"],
+                endTime = classTimes[i]["endTime"],
+                lectureType = classTypes[i],
+                location = classLocations[i]
+            ))
+        }
+    }
 
     fun fetchLectures(year: Int, semester: Semester) {
         val variableList: List<String> = listOf(
@@ -159,15 +185,21 @@ class TimetableFetchService(private val lectureRepository: LectureRepository) {
 
         val fullBytes = flux
             .reduce(ByteArray(0)) { acc, chunk ->
-                acc + chunk  // ByteArray 합치기 (단, 대용량이면 OutputStream 권장)
+                acc + chunk
             }
             .block()
 
-        try {
-            val lectureList = parseLectureXls(year, semester, fullBytes!!)
-            lectureRepository.saveAll(lectureList)
-        } catch (e: Exception) {
-
+        val oldLectures = lectureRepository.findAllByYearAndSemester(year, semester.value).associate { lecture ->
+            (lecture.courseNumber + "##" + lecture.lectureNumber) to lecture.id
         }
+        val newLectureList = parseLectureXls(year, semester, fullBytes!!)
+        for (lecture in newLectureList) {
+            val oldLectureId = oldLectures.get(lecture.courseNumber + "##" + lecture.lectureNumber)
+            if (oldLectureId != null) {
+                lecture.id = oldLectureId
+            }
+        }
+
+        lectureRepository.saveAll(newLectureList)
     }
 }
