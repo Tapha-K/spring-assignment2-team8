@@ -4,7 +4,7 @@ import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.model.Lecture
 import com.wafflestudio.spring2025.timetable.model.LectureTime
 
-data class LectureDto (
+data class LectureDto(
     var id: Long? = null,
     var year: Int,
     var semester: Semester,
@@ -21,9 +21,8 @@ data class LectureDto (
     var lectureTimes: Set<LectureTimeDto>,
     var instructor: String,
     var remark: String,
-
 ) {
-    constructor(lecture: Lecture): this(
+    constructor(lecture: Lecture) : this(
         id = lecture.id,
         year = lecture.year,
         semester = Semester.fromValue(lecture.semester),
@@ -43,14 +42,14 @@ data class LectureDto (
     )
 }
 
-data class LectureTimeDto (
+data class LectureTimeDto(
     var dayOfWeek: String,
     var startTime: Int,
     var endTime: Int,
     var lectureType: String,
     var location: String,
 ) {
-    constructor(lectureTime: LectureTime): this(
+    constructor(lectureTime: LectureTime) : this(
         dayOfWeek = lectureTime.dayOfWeek,
         startTime = lectureTime.startTime,
         endTime = lectureTime.endTime,

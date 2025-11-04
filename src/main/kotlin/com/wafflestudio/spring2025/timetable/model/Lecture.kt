@@ -5,7 +5,7 @@ import org.springframework.data.relational.core.mapping.MappedCollection
 import org.springframework.data.relational.core.mapping.Table
 
 @Table("lectures")
-class Lecture (
+class Lecture(
     @Id var id: Long? = null,
     var year: Int,
     var semester: Int,
@@ -24,7 +24,6 @@ class Lecture (
     var location: String,
     var instructor: String,
     var remark: String,
-
     @MappedCollection(idColumn = "lecture_id")
-    var lectureTimes: Set<LectureTime> = emptySet()
+    var lectureTimes: Set<LectureTime> = emptySet(),
 )

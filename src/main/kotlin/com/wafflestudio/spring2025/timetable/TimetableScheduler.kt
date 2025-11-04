@@ -3,13 +3,11 @@ package com.wafflestudio.spring2025.timetable
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.service.TimetableFetchService
 import jakarta.annotation.PostConstruct
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
-
 @Component
-class TimetableScheduler (
+class TimetableScheduler(
     private val timetableFetchService: TimetableFetchService,
 ) {
     @PostConstruct

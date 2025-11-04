@@ -22,6 +22,6 @@ data class TimetableWithLectures(
         semester = Semester.fromValue(timetable.semester),
         title = timetable.title,
         lectures = lectures.map { LectureDto(it) },
-        totalCredits = lectures.sumOf { it.credit }
+        totalCredits = lectures.sumOf { it.credit },
     )
 }

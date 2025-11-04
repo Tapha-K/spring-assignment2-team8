@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 
 @Table("timetable_lecture")
-class TimetableLecture (
+class TimetableLecture(
     @Id var id: Long? = null,
     var timetableId: Long,
     var lectureId: Long,

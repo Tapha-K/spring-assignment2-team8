@@ -1,7 +1,6 @@
 package com.wafflestudio.spring2025.timetable
 
 import com.wafflestudio.spring2025.DomainException
-import com.wafflestudio.spring2025.post.PostException
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 

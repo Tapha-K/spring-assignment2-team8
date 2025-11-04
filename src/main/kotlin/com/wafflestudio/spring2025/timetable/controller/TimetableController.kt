@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class TimetableController (
+class TimetableController(
     private val timetableService: TimetableService,
 ) {
     @PostMapping("/api/v1/timetable/create")
@@ -59,11 +59,12 @@ class TimetableController (
         @LoggedInUser user: User,
         @RequestBody updateRequest: UpdateTimetableRequest,
     ): ResponseEntity<TimetableDto> {
-        val timetableDto = timetableService.update(
-            timetableId = id,
-            user = user,
-            title = updateRequest.title,
-        )
+        val timetableDto =
+            timetableService.update(
+                timetableId = id,
+                user = user,
+                title = updateRequest.title,
+            )
 
         return ResponseEntity.ok(timetableDto)
     }

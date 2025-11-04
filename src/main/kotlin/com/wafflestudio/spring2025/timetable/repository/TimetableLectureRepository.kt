@@ -5,7 +5,9 @@ import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 
-interface TimetableLectureRepository: CrudRepository<TimetableLecture, Long> {
+interface TimetableLectureRepository : CrudRepository<TimetableLecture, Long> {
     @Query("SELECT lecture_id FROM timetable_lecture WHERE timetable_id = :tid")
-    fun findLectureIdsByTimetableId(@Param("tid") timetableId: Long): List<Long>
+    fun findLectureIdsByTimetableId(
+        @Param("tid") timetableId: Long,
+    ): List<Long>
 }

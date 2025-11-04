@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 
 @Table("timetables")
-class Timetable (
+class Timetable(
     @Id var id: Long? = null,
     var userId: Long,
     var year: Int,
