@@ -1,4 +1,4 @@
-package com.wafflestudio.spring2025.timetable.dto
+package com.wafflestudio.spring2025.timetable.dto.core
 
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.model.Lecture
@@ -18,8 +18,7 @@ data class LectureDto (
     var courseTitle: String,
     var courseSubtitle: String,
     var credit: Int,
-    var lectureTimes: Set<LectureTime>,
-    var location: String,
+    var lectureTimes: Set<LectureTimeDto>,
     var instructor: String,
     var remark: String,
 
@@ -27,7 +26,7 @@ data class LectureDto (
     constructor(lecture: Lecture): this(
         id = lecture.id,
         year = lecture.year,
-        semester = Semester.fromCode(lecture.semester),
+        semester = Semester.fromValue(lecture.semester),
         classification = lecture.classification,
         college = lecture.college,
         department = lecture.department,
@@ -38,9 +37,24 @@ data class LectureDto (
         courseTitle = lecture.courseTitle,
         courseSubtitle = lecture.courseSubtitle,
         credit = lecture.credit,
-        lectureTimes = lecture.lectureTimes,
-        location = lecture.location,
+        lectureTimes = lecture.lectureTimes.map { LectureTimeDto(it) }.toSet(),
         instructor = lecture.instructor,
         remark = lecture.remark,
+    )
+}
+
+data class LectureTimeDto (
+    var dayOfWeek: String,
+    var startTime: Int,
+    var endTime: Int,
+    var lectureType: String,
+    var location: String,
+) {
+    constructor(lectureTime: LectureTime): this(
+        dayOfWeek = lectureTime.dayOfWeek,
+        startTime = lectureTime.startTime,
+        endTime = lectureTime.endTime,
+        lectureType = lectureTime.lectureType,
+        location = lectureTime.location,
     )
 }

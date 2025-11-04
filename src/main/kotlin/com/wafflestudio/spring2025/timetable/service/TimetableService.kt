@@ -4,8 +4,8 @@ import com.wafflestudio.spring2025.timetable.TimetableBlankTitleException
 import com.wafflestudio.spring2025.timetable.TimetableDuplicateTitleException
 import com.wafflestudio.spring2025.timetable.TimetableNotFoundException
 import com.wafflestudio.spring2025.timetable.TimetableUpdateForbiddenException
-import com.wafflestudio.spring2025.timetable.dto.TimetableDto
-import com.wafflestudio.spring2025.timetable.dto.TimetableWithLectures
+import com.wafflestudio.spring2025.timetable.dto.core.TimetableDto
+import com.wafflestudio.spring2025.timetable.dto.core.TimetableWithLectures
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.model.Timetable
 import com.wafflestudio.spring2025.timetable.repository.LectureRepository
@@ -13,7 +13,10 @@ import com.wafflestudio.spring2025.timetable.repository.TimetableLectureReposito
 import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
 import com.wafflestudio.spring2025.user.model.User
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.stereotype.Service
 
+
+@Service
 class TimetableService (
     private val timetableRepository : TimetableRepository,
     private val lectureRepository : LectureRepository,

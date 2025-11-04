@@ -39,8 +39,6 @@ class TimetableFetchService(
             val workbook = HSSFWorkbook(input)
             val sheet = workbook.getSheetAt(0)
 
-            println(sheet.getRow(2).forEach { cell -> print(cell.toString()); print(" ") })
-
             for (rowIndex in 3 until sheet.lastRowNum) {
                 val row = sheet.getRow(rowIndex) ?: continue
                 val lecture = Lecture(
@@ -62,13 +60,7 @@ class TimetableFetchService(
                     instructor = row.getCell(15).toString(),
                     remark = row.getCell(21).toString(),
                 )
-
                 result.add(lecture)
-                print(lecture.courseTitle + " ")
-                print(lecture.classTimeText + " ")
-                print(lecture.instructor + " ")
-                println(lecture.remark)
-
             }
             workbook.close()
         }

@@ -2,16 +2,25 @@ package com.wafflestudio.spring2025.timetable
 
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.service.TimetableFetchService
+import jakarta.annotation.PostConstruct
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 
 @Component
 class TimetableScheduler (
-    private val timetableFetchService: TimetableFetchService
+    private val timetableFetchService: TimetableFetchService,
 ) {
-    @Scheduled(fixedRate = 600000)
+    @PostConstruct
+    fun runOnStartup() {
+        runCrawl()
+    }
+
+    @Scheduled(cron = "\${snusugang.refresh}")
     fun runCrawl() {
-        timetableFetchService.fetchLectures(2025, Semester.AUTUMN)
+        for (semester in Semester.entries) {
+            timetableFetchService.fetchLectures(2025, semester)
+        }
     }
 }

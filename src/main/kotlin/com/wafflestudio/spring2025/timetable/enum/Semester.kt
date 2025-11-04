@@ -11,7 +11,7 @@ enum class Semester(
     ;
 
     companion object {
-        private val map = Semester.entries.associateBy(Semester::value)
-        fun fromCode(code: Int) = map[code] ?: throw IllegalArgumentException("Unknown semester code: $code")
+        private val mapByValue = Semester.entries.associateBy(Semester::value)
+        fun fromValue(value: Int) = mapByValue[value] ?: throw IllegalArgumentException("Unknown semester code: $value")
     }
 }

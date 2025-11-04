@@ -1,4 +1,4 @@
-package com.wafflestudio.spring2025.timetable.dto
+package com.wafflestudio.spring2025.timetable.dto.core
 
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.model.Timetable
@@ -16,7 +16,7 @@ data class TimetableDto(
         id = timetable.id!!,
         user = UserDto(user),
         year = timetable.year,
-        semester = Semester.fromCode(timetable.semester),
+        semester = Semester.fromValue(timetable.semester),
         title = timetable.title,
     )
 }
