@@ -1,5 +1,6 @@
 package com.wafflestudio.spring2025.timetable.service
 
+import com.wafflestudio.spring2025.timetable.TimetableFetchException
 import com.wafflestudio.spring2025.timetable.model.Lecture
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.model.LectureTime
@@ -7,15 +8,17 @@ import com.wafflestudio.spring2025.timetable.repository.LectureRepository
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.http.HttpHeaders
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.stereotype.Component
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.reactive.function.BodyInserters
 import java.io.ByteArrayInputStream
 
 @Component
-class TimetableFetchService(private val lectureRepository: LectureRepository) {
+class TimetableFetchService(
+    private val lectureRepository: LectureRepository
+) {
     companion object {
         private const val TIMETABLE_SNU_BASEURL = "https://sugang.snu.ac.kr"
         private const val TIMETABLE_SNU_REFERER = "https://sugang.snu.ac.kr/sugang/cc/cc100InterfaceSrch.action"
@@ -27,7 +30,7 @@ class TimetableFetchService(private val lectureRepository: LectureRepository) {
         .baseUrl(TIMETABLE_SNU_BASEURL)
         .defaultHeader(HttpHeaders.REFERER, TIMETABLE_SNU_REFERER)
         .defaultHeader(HttpHeaders.USER_AGENT, DEFAULT_USER_AGENT)
-        .build();
+        .build()
 
     private fun parseLectureXls(year: Int, semester: Semester, bytes: ByteArray): ArrayList<Lecture> {
         val result = ArrayList<Lecture>()
@@ -81,28 +84,31 @@ class TimetableFetchService(private val lectureRepository: LectureRepository) {
             Semester.WINTER -> "U000200002U000300002"
         }
 
-    private fun getLectureTimes(lecture: Lecture): ArrayList<LectureTime> {
-        val result = ArrayList<LectureTime>()
-        val classTimes = lecture.classTimeText.split("/").map {
-            mapOf(
-                "day" to it[0],
-                "startTime" to it.substring(2, 4).toInt() * 60 + it.substring(5, 7).toInt(),
-                "endTime" to it.substring(8, 10).toInt() * 60 + it.substring(11, 13).toInt(),
-            )
+    private fun getLectureTimes(lecture: Lecture) {
+        if (lecture.classTimeText.isEmpty()) {
+            return
         }
+
+        val result: MutableSet<LectureTime> = HashSet()
+        val classTimes = lecture.classTimeText.split("/")
         val classTypes = lecture.classTypeText.split("/")
         val classLocations = lecture.location.split("/")
 
-        for (i in 0 until classTimes.count()) {
+        if (classTimes.size != classTypes.size || classTimes.size != classLocations.size) {
+            throw TimetableFetchException()
+        }
+
+        for (i in classTimes.indices) {
             result.add(LectureTime(
-                // lectureid 어떻게 처리?
-                dayOfWeek = classTimes[i]["day"],
-                startTime = classTimes[i]["startTime"],
-                endTime = classTimes[i]["endTime"],
+                dayOfWeek = classTimes[i].substring(0, 1),
+                startTime = classTimes[i].substring(2, 4).toInt() * 60 + classTimes[i].substring(5, 7).toInt(),
+                endTime = classTimes[i].substring(8, 10).toInt() * 60 + classTimes[i].substring(11, 13).toInt(),
                 lectureType = classTypes[i],
                 location = classLocations[i]
             ))
         }
+
+        lecture.lectureTimes = result
     }
 
     fun fetchLectures(year: Int, semester: Semester) {
@@ -192,8 +198,13 @@ class TimetableFetchService(private val lectureRepository: LectureRepository) {
         val oldLectures = lectureRepository.findAllByYearAndSemester(year, semester.value).associate { lecture ->
             (lecture.courseNumber + "##" + lecture.lectureNumber) to lecture.id
         }
+
         val newLectureList = parseLectureXls(year, semester, fullBytes!!)
-        for (lecture in newLectureList) {
+
+        // 있던 강의가 없어질 수도 있나..?
+        newLectureList.forEach { lecture ->
+            getLectureTimes(lecture)
+
             val oldLectureId = oldLectures.get(lecture.courseNumber + "##" + lecture.lectureNumber)
             if (oldLectureId != null) {
                 lecture.id = oldLectureId

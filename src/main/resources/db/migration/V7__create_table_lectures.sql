@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS lectures
     course_subtitle VARCHAR(255),
     credit          INT          NOT NULL,
     class_time_text VARCHAR(255) NOT NULL,
+    class_type_text VARCHAR(255),
     location        VARCHAR(255),
     instructor      VARCHAR(255),
     remark          TEXT
