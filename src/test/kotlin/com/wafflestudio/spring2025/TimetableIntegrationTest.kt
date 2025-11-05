@@ -3,6 +3,15 @@ package com.wafflestudio.spring2025
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.wafflestudio.spring2025.helper.DataGenerator
 import com.wafflestudio.spring2025.helper.QueryCounter
+import com.wafflestudio.spring2025.timetable.TimetableScheduler
+import com.wafflestudio.spring2025.timetable.dto.AddLectureRequest
+import com.wafflestudio.spring2025.timetable.dto.CreateTimetableRequest
+import com.wafflestudio.spring2025.timetable.dto.UpdateTimetableRequest
+import com.wafflestudio.spring2025.timetable.enum.Semester
+import com.wafflestudio.spring2025.timetable.repository.LectureRepository
+import com.wafflestudio.spring2025.timetable.repository.TimetableLectureRepository
+import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
@@ -12,21 +21,14 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.junit.jupiter.Testcontainers
-import org.assertj.core.api.Assertions.assertThat
-
-// 2차 과제 필요 import
-import com.wafflestudio.spring2025.timetable.dto.AddLectureRequest
-import com.wafflestudio.spring2025.timetable.dto.CreateTimetableRequest
-import com.wafflestudio.spring2025.timetable.dto.UpdateTimetableRequest
-import com.wafflestudio.spring2025.timetable.repository.TimetableLectureRepository
-import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
-import com.wafflestudio.spring2025.timetable.enum.Semester
-import com.wafflestudio.spring2025.timetable.repository.LectureRepository
-import com.wafflestudio.spring2025.timetable.TimetableScheduler
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -45,11 +47,6 @@ class TimetableIntegrationTest
         private val lectureRepository: LectureRepository,
         private val timetableScheduler: TimetableScheduler,
     ) {
-        // TDD용 임시 DTO
-        data class AddLectureRequest(
-            val lectureId: Long,
-        )
-
         @Test
         fun `should create a timetable`() {
             // 시간표를 생성할 수 있다

@@ -6,7 +6,6 @@ import com.wafflestudio.spring2025.comment.model.Comment
 import com.wafflestudio.spring2025.comment.repository.CommentRepository
 import com.wafflestudio.spring2025.post.model.Post
 import com.wafflestudio.spring2025.post.repository.PostRepository
-// 2주차 과제 import
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.model.Lecture
 import com.wafflestudio.spring2025.timetable.model.LectureTime
@@ -15,7 +14,6 @@ import com.wafflestudio.spring2025.timetable.model.TimetableLecture
 import com.wafflestudio.spring2025.timetable.repository.LectureRepository
 import com.wafflestudio.spring2025.timetable.repository.TimetableLectureRepository
 import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
-
 import com.wafflestudio.spring2025.user.JwtTokenProvider
 import com.wafflestudio.spring2025.user.model.User
 import com.wafflestudio.spring2025.user.repository.UserRepository
@@ -30,7 +28,6 @@ class DataGenerator(
     private val postRepository: PostRepository,
     private val commentRepository: CommentRepository,
     private val jwtTokenProvider: JwtTokenProvider,
-    // 2주차 과제 리포지토리 주입
     private val timetableRepository: TimetableRepository,
     private val lectureRepository: LectureRepository,
     private val timetableLectureRepository: TimetableLectureRepository,
