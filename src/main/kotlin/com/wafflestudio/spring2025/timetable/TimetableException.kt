@@ -67,14 +67,14 @@ class TimetableDuplicateLectureException :
         msg = "Lecture already exists.",
     )
 
-class TimetableLectureNotFoundException:
+class TimetableLectureNotFoundException :
     TimetableException(
         errorCode = 0,
         httpStatusCode = HttpStatus.BAD_REQUEST,
         msg = "Lecture does not exist in this timetable",
     )
 
-class TimetableWrongSemesterException:
+class TimetableWrongSemesterException :
     TimetableException(
         errorCode = 0,
         httpStatusCode = HttpStatus.BAD_REQUEST,

@@ -3,12 +3,12 @@ package com.wafflestudio.spring2025.timetable.controller
 import com.wafflestudio.spring2025.timetable.dto.LectureSearchRequest
 import com.wafflestudio.spring2025.timetable.dto.core.LectureDto
 import com.wafflestudio.spring2025.timetable.service.LectureService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.tags.Tag
 
 @Tag(name = "강의 API", description = "강의 검색 및 조회 API")
 @RestController

@@ -6,10 +6,11 @@ import com.wafflestudio.spring2025.timetable.dto.UpdateTimetableRequest
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableDto
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableWithLectures
 import com.wafflestudio.spring2025.timetable.enum.Semester
-import com.wafflestudio.spring2025.timetable.model.Timetable
 import com.wafflestudio.spring2025.timetable.service.TimetableService
 import com.wafflestudio.spring2025.user.LoggedInUser
 import com.wafflestudio.spring2025.user.model.User
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import kotlin.Long
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.tags.Tag
 
 @Tag(name = "시간표 API", description = "시간표 생성, 조회, 수정, 삭제 및 강의 추가/삭제 API")
 @RestController
@@ -94,13 +93,14 @@ class TimetableController(
     fun addLecture(
         @PathVariable id: Long,
         @LoggedInUser user: User,
-        @RequestBody request: AddLectureRequest
+        @RequestBody request: AddLectureRequest,
     ): ResponseEntity<TimetableDto> {
-        val updatedTimetable = timetableService.addLecture(
-            timetableId = id,
-            lectureId = request.lectureId,
-            user = user
-        )
+        val updatedTimetable =
+            timetableService.addLecture(
+                timetableId = id,
+                lectureId = request.lectureId,
+                user = user,
+            )
         return ResponseEntity.ok(updatedTimetable)
     }
 
@@ -114,6 +114,4 @@ class TimetableController(
         timetableService.deleteLecture(timetableId, user, lectureId)
         return ResponseEntity.noContent().build()
     }
-
-
 }

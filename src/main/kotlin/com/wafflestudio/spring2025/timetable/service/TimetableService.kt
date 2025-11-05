@@ -21,7 +21,6 @@ import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
 import com.wafflestudio.spring2025.user.model.User
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import java.time.LocalTime
 
 @Service
 class TimetableService(
@@ -129,9 +128,10 @@ class TimetableService(
         }
 
         val existingLectures = lectureRepository.findAllById(existingLectureIds)
-        val hasConflict = existingLectures.any { existing ->
-            isTimeOverlapping(existing, lecture)
-        }
+        val hasConflict =
+            existingLectures.any { existing ->
+                isTimeOverlapping(existing, lecture)
+            }
         if (hasConflict) {
             throw TimetableDuplicateTimeException()
         }
@@ -140,34 +140,39 @@ class TimetableService(
             TimetableLecture(
                 timetableId = timetableId,
                 lectureId = lectureId,
-            )
+            ),
         )
 
         return TimetableDto(timetable, user)
     }
 
-    private fun isTimeOverlapping(a: Lecture, b: Lecture): Boolean {
+    private fun isTimeOverlapping(
+        a: Lecture,
+        b: Lecture,
+    ): Boolean {
         val aTimes = a.lectureTimes
         val bTimes = b.lectureTimes
 
         return aTimes.any { ta ->
             bTimes.any { tb ->
                 ta.dayOfWeek == tb.dayOfWeek &&
-                        overlaps(ta.startTime, ta.endTime, tb.startTime, tb.endTime)
+                    overlaps(ta.startTime, ta.endTime, tb.startTime, tb.endTime)
             }
         }
     }
 
-    private fun overlaps(s1: Int, e1: Int, s2: Int, e2: Int): Boolean {
-
-        return s1 < e2 && s2 < e1
-    }
+    private fun overlaps(
+        s1: Int,
+        e1: Int,
+        s2: Int,
+        e2: Int,
+    ): Boolean = s1 < e2 && s2 < e1
 
     fun deleteLecture(
         timetableId: Long,
         user: User,
         lectureId: Long,
-    ){
+    ) {
         val timetable = timetableRepository.findByIdOrNull(timetableId) ?: throw TimetableNotFoundException()
 
         if (timetable.userId != user.id) {
@@ -181,8 +186,4 @@ class TimetableService(
 
         timetableLectureRepository.deleteByTimetableIdAndLectureId(timetableId, lectureId)
     }
-
-
-
 }
-

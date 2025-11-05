@@ -10,20 +10,21 @@ class LectureService(
     private val lectureRepository: LectureRepository,
 ) {
     fun searchLectures(request: LectureSearchRequest): List<LectureDto> {
+        val allLectures =
+            lectureRepository.findAllByYearAndSemester(
+                request.year,
+                request.semester,
+            )
 
-        val allLectures = lectureRepository.findAllByYearAndSemester(
-            request.year,
-            request.semester
-        )
-
-        val filtered = if (request.keyword.isBlank()) {
-            allLectures
-        } else {
-            allLectures.filter {
-                it.courseTitle.contains(request.keyword, ignoreCase = true) ||
+        val filtered =
+            if (request.keyword.isBlank()) {
+                allLectures
+            } else {
+                allLectures.filter {
+                    it.courseTitle.contains(request.keyword, ignoreCase = true) ||
                         it.instructor.contains(request.keyword, ignoreCase = true)
+                }
             }
-        }
 
         val fromIndex = request.page * request.size
         val toIndex = minOf(fromIndex + request.size, filtered.size)

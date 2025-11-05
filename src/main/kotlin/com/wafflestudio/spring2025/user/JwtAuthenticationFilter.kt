@@ -44,6 +44,15 @@ class JwtAuthenticationFilter(
 
     private fun isPublicPath(path: String): Boolean {
         val pathMatcher = AntPathMatcher()
-        return pathMatcher.match("/api/v1/auth/**", path)
+
+        val publicPaths =
+            listOf(
+                "/api/v1/auth/**", // 기존 로그인/회원가입 경로
+                "/swagger-ui.html", // Swagger UI 메인 페이지
+                "/swagger-ui/**", // Swagger UI 리소스 (css, js 등)
+                "/v3/api-docs/**", // API 명세서 (JSON)
+            )
+
+        return publicPaths.any { pathMatcher.match(it, path) }
     }
 }

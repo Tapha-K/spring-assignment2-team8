@@ -5,8 +5,6 @@ import com.wafflestudio.spring2025.helper.DataGenerator
 import com.wafflestudio.spring2025.helper.QueryCounter
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -30,7 +28,6 @@ import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.repository.LectureRepository
 import com.wafflestudio.spring2025.timetable.TimetableScheduler
 
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Testcontainers
@@ -46,29 +43,31 @@ class TimetableIntegrationTest
         private val timetableRepository: TimetableRepository,
         private val timetableLectureRepository: TimetableLectureRepository,
         private val lectureRepository: LectureRepository,
-        private val timetableScheduler: TimetableScheduler
+        private val timetableScheduler: TimetableScheduler,
     ) {
-
         // TDD용 임시 DTO
-        data class AddLectureRequest(val lectureId: Long)
+        data class AddLectureRequest(
+            val lectureId: Long,
+        )
 
         @Test
         fun `should create a timetable`() {
             // 시간표를 생성할 수 있다
             val (user, token) = dataGenerator.generateUser()
-            val request = CreateTimetableRequest(
-                year = 2025,
-                semester = "SPRING",
-                title = "새 학기 시간표"
-            )
+            val request =
+                CreateTimetableRequest(
+                    year = 2025,
+                    semester = "SPRING",
+                    title = "새 학기 시간표",
+                )
 
-            mvc.perform(
-                post("/api/v1/timetable/create")
-                    .header("Authorization", "Bearer $token")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request))
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    post("/api/v1/timetable/create")
+                        .header("Authorization", "Bearer $token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.title").value("새 학기 시간표"))
         }
 
@@ -79,11 +78,11 @@ class TimetableIntegrationTest
             dataGenerator.generateTimetable(user1, 2024, "SPRING", "T1")
             dataGenerator.generateTimetable(user1, 2024, "AUTUMN", "T2")
 
-            mvc.perform(
-                get("/api/v1/timetable/list")
-                    .header("Authorization", "Bearer $token1")
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    get("/api/v1/timetable/list")
+                        .header("Authorization", "Bearer $token1"),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$", hasSize<Any>(2)))
         }
 
@@ -98,11 +97,11 @@ class TimetableIntegrationTest
             // 강의 목록 찾기 (쿼리 3)
             // 총 3번의 쿼리가 정상
             queryCounter.assertQueryCount(3L) {
-                mvc.perform(
-                    get("/api/v1/timetable/{id}", timetable.id)
-                        .header("Authorization", "Bearer $token")
-                )
-                    .andExpect(status().isOk)
+                mvc
+                    .perform(
+                        get("/api/v1/timetable/{id}", timetable.id)
+                            .header("Authorization", "Bearer $token"),
+                    ).andExpect(status().isOk)
                     .andExpect(jsonPath("$.totalCredits").value(0))
             }
         }
@@ -114,13 +113,13 @@ class TimetableIntegrationTest
             val timetable = dataGenerator.generateTimetable(user, title = "옛날 이름")
             val request = UpdateTimetableRequest(title = "새 이름")
 
-            mvc.perform(
-                patch("/api/v1/timetable/{id}", timetable.id)
-                    .header("Authorization", "Bearer $token")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request))
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    patch("/api/v1/timetable/{id}", timetable.id)
+                        .header("Authorization", "Bearer $token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.title").value("새 이름"))
         }
 
@@ -132,13 +131,13 @@ class TimetableIntegrationTest
             val timetable = dataGenerator.generateTimetable(owner)
             val request = UpdateTimetableRequest(title = "해킹시도")
 
-            mvc.perform(
-                patch("/api/v1/timetable/{id}", timetable.id)
-                    .header("Authorization", "Bearer $attackerToken")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request))
-            )
-                .andExpect(status().isForbidden) // 403
+            mvc
+                .perform(
+                    patch("/api/v1/timetable/{id}", timetable.id)
+                        .header("Authorization", "Bearer $attackerToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)),
+                ).andExpect(status().isForbidden) // 403
         }
 
         @Test
@@ -147,11 +146,11 @@ class TimetableIntegrationTest
             val timetable = dataGenerator.generateTimetable(user)
             val timetableId = timetable.id!!
 
-            mvc.perform(
-                delete("/api/v1/timetable/{id}", timetableId)
-                    .header("Authorization", "Bearer $token")
-            )
-                .andExpect(status().isNoContent) // 204
+            mvc
+                .perform(
+                    delete("/api/v1/timetable/{id}", timetableId)
+                        .header("Authorization", "Bearer $token"),
+                ).andExpect(status().isNoContent) // 204
 
             assertFalse(timetableRepository.findById(timetableId).isPresent)
         }
@@ -163,11 +162,11 @@ class TimetableIntegrationTest
             val (attacker, attackerToken) = dataGenerator.generateUser("attacker")
             val timetable = dataGenerator.generateTimetable(owner)
 
-            mvc.perform(
-                delete("/api/v1/timetable/{id}", timetable.id)
-                    .header("Authorization", "Bearer $attackerToken")
-            )
-                .andExpect(status().isForbidden) // 403
+            mvc
+                .perform(
+                    delete("/api/v1/timetable/{id}", timetable.id)
+                        .header("Authorization", "Bearer $attackerToken"),
+                ).andExpect(status().isForbidden) // 403
         }
 
         @Test
@@ -179,14 +178,14 @@ class TimetableIntegrationTest
             dataGenerator.generateLecture(2025, "SPRING", title = "데이터베이스", instructor = "A교수")
             dataGenerator.generateLecture(2025, "AUTUMN", title = "컴퓨터 프로그래밍", instructor = "C교수")
 
-            mvc.perform(
-                get("/api/v1/lectures") // 실제 API 경로
-                    .header("Authorization", "Bearer $token")
-                    .param("year", "2025")
-                    .param("semester", Semester.SPRING.value.toString()) // Int 값
-                    .param("keyword", "A교수") // A교수로 검색
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    get("/api/v1/lectures") // 실제 API 경로
+                        .header("Authorization", "Bearer $token")
+                        .param("year", "2025")
+                        .param("semester", Semester.SPRING.value.toString()) // Int 값
+                        .param("keyword", "A교수"), // A교수로 검색
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$", hasSize<Any>(2))) // 2개
                 .andExpect(jsonPath("$[0].instructor").value("A교수"))
         }
@@ -199,13 +198,13 @@ class TimetableIntegrationTest
             val lecture = dataGenerator.generateLecture()
             val request = AddLectureRequest(lectureId = lecture.id!!) // 실제 DTO
 
-            mvc.perform(
-                post("/api/v1/timetable/{id}/lectures", timetable.id) // 실제 API 경로
-                    .header("Authorization", "Bearer $token")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request))
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    post("/api/v1/timetable/{id}/lectures", timetable.id) // 실제 API 경로
+                        .header("Authorization", "Bearer $token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.id").value(timetable.id!!)) // TimetableDto 반환
         }
 
@@ -216,24 +215,30 @@ class TimetableIntegrationTest
             val timetable = dataGenerator.generateTimetable(user)
 
             // [수정됨] DataGenerator가 (버그에 맞춘) HHmm 형식 사용
-            val lecture1 = dataGenerator.generateLecture(
-                dayOfWeek = "월", startTime = 1000, endTime = 1100 // 10:00 - 11:00
-            )
-            val lecture2 = dataGenerator.generateLecture(
-                dayOfWeek = "월", startTime = 1030, endTime = 1130 // 10:30 - 11:30 (겹침)
-            )
+            val lecture1 =
+                dataGenerator.generateLecture(
+                    dayOfWeek = "월",
+                    startTime = 1000,
+                    endTime = 1100, // 10:00 - 11:00
+                )
+            val lecture2 =
+                dataGenerator.generateLecture(
+                    dayOfWeek = "월",
+                    startTime = 1030,
+                    endTime = 1130, // 10:30 - 11:30 (겹침)
+                )
 
             dataGenerator.addLectureToTimetable(timetable, lecture1) // 강의1 추가
 
             val request = AddLectureRequest(lectureId = lecture2.id!!)
 
-            mvc.perform(
-                post("/api/v1/timetable/{id}/lectures", timetable.id)
-                    .header("Authorization", "Bearer $token")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request))
-            )
-                .andExpect(status().isBadRequest) // 400 (TimetableDuplicateTimeException)
+            mvc
+                .perform(
+                    post("/api/v1/timetable/{id}/lectures", timetable.id)
+                        .header("Authorization", "Bearer $token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)),
+                ).andExpect(status().isBadRequest) // 400 (TimetableDuplicateTimeException)
         }
 
         @Test
@@ -245,13 +250,13 @@ class TimetableIntegrationTest
             val lecture = dataGenerator.generateLecture()
             val request = AddLectureRequest(lectureId = lecture.id!!)
 
-            mvc.perform(
-                post("/api/v1/timetable/{id}/lectures", timetable.id)
-                    .header("Authorization", "Bearer $attackerToken")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request))
-            )
-                .andExpect(status().isForbidden) // 403
+            mvc
+                .perform(
+                    post("/api/v1/timetable/{id}/lectures", timetable.id)
+                        .header("Authorization", "Bearer $attackerToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)),
+                ).andExpect(status().isForbidden) // 403
         }
 
         @Test
@@ -262,16 +267,17 @@ class TimetableIntegrationTest
             val lecture = dataGenerator.generateLecture()
             dataGenerator.addLectureToTimetable(timetable, lecture) // 미리 추가
 
-            mvc.perform(
-                delete("/api/v1/timetable/{timetableId}/lectures/{lectureId}", timetable.id, lecture.id) // 실제 API 경로
-                    .header("Authorization", "Bearer $token")
-            )
-                .andExpect(status().isNoContent) // 204
+            mvc
+                .perform(
+                    delete("/api/v1/timetable/{timetableId}/lectures/{lectureId}", timetable.id, lecture.id) // 실제 API 경로
+                        .header("Authorization", "Bearer $token"),
+                ).andExpect(status().isNoContent) // 204
 
             // 연관 테이블에서 삭제되었는지 확인
             assertFalse(
-                timetableLectureRepository.deleteByTimetableIdAndLectureId(timetable.id!!, lecture.id!!)
-                    .let { timetableLectureRepository.findLectureIdsByTimetableId(timetable.id!!).contains(lecture.id!!) }
+                timetableLectureRepository
+                    .deleteByTimetableIdAndLectureId(timetable.id!!, lecture.id!!)
+                    .let { timetableLectureRepository.findLectureIdsByTimetableId(timetable.id!!).contains(lecture.id!!) },
             )
         }
 
@@ -284,11 +290,11 @@ class TimetableIntegrationTest
             val lecture = dataGenerator.generateLecture()
             dataGenerator.addLectureToTimetable(timetable, lecture)
 
-            mvc.perform(
-                delete("/api/v1/timetable/{timetableId}/lectures/{lectureId}", timetable.id, lecture.id) // 👈 실제 API 경로
-                    .header("Authorization", "Bearer $attackerToken")
-            )
-                .andExpect(status().isForbidden) // 403
+            mvc
+                .perform(
+                    delete("/api/v1/timetable/{timetableId}/lectures/{lectureId}", timetable.id, lecture.id) // 👈 실제 API 경로
+                        .header("Authorization", "Bearer $attackerToken"),
+                ).andExpect(status().isForbidden) // 403
         }
 
         @Test
@@ -299,7 +305,7 @@ class TimetableIntegrationTest
 
             // @PostConstruct가 저장한 데이터를 테스트 시작 전에 삭제
             lectureRepository.deleteAll(
-                lectureRepository.findAllByYearAndSemester(testYear, testSemester.value)
+                lectureRepository.findAllByYearAndSemester(testYear, testSemester.value),
             )
 
             val lecturesBefore = lectureRepository.findAllByYearAndSemester(testYear, testSemester.value)
@@ -324,11 +330,11 @@ class TimetableIntegrationTest
             dataGenerator.addLectureToTimetable(timetable, lecture1)
             dataGenerator.addLectureToTimetable(timetable, lecture2)
 
-            mvc.perform(
-                get("/api/v1/timetable/{id}", timetable.id)
-                    .header("Authorization", "Bearer $token")
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    get("/api/v1/timetable/{id}", timetable.id)
+                        .header("Authorization", "Bearer $token"),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.lectures", hasSize<Any>(2)))
                 .andExpect(jsonPath("$.totalCredits").value(4)) // 3 + 1
         }
@@ -346,71 +352,74 @@ class TimetableIntegrationTest
             dataGenerator.generateLecture(2025, "AUTUMN", title = "Paging Test Other") // 다른 학기
 
             // 1페이지 (size=10)
-            mvc.perform(
-                get("/api/v1/lectures")
-                    .header("Authorization", "Bearer $token")
-                    .param("year", "2025")
-                    .param("semester", semester.toString())
-                    .param("keyword", "Paging")
-                    .param("page", "0") // 0-based
-                    .param("size", "10")
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    get("/api/v1/lectures")
+                        .header("Authorization", "Bearer $token")
+                        .param("year", "2025")
+                        .param("semester", semester.toString())
+                        .param("keyword", "Paging")
+                        .param("page", "0") // 0-based
+                        .param("size", "10"),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$", hasSize<Any>(10))) // 10개
 
             // 2페이지 (size=10)
-            mvc.perform(
-                get("/api/v1/lectures")
-                    .header("Authorization", "Bearer $token")
-                    .param("year", "2025")
-                    .param("semester", semester.toString())
-                    .param("keyword", "Paging")
-                    .param("page", "1") // 1-based (2번째 페이지)
-                    .param("size", "10")
-            )
-                .andExpect(status().isOk)
+            mvc
+                .perform(
+                    get("/api/v1/lectures")
+                        .header("Authorization", "Bearer $token")
+                        .param("year", "2025")
+                        .param("semester", semester.toString())
+                        .param("keyword", "Paging")
+                        .param("page", "1") // 1-based (2번째 페이지)
+                        .param("size", "10"),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$", hasSize<Any>(5))) // 나머지 5개
         }
 
-    // 추가 테스트
-    @Test
-    fun `should return error when adding lecture with mismatched semester or year`() {
+        // 추가 테스트
+        @Test
+        fun `should return error when adding lecture with mismatched semester or year`() {
             // 시간표와 강의의 년도/학기가 다르면 강의를 등록할 수 없다
             val (user, token) = dataGenerator.generateUser()
 
-            val timetable = dataGenerator.generateTimetable(
-                user = user,
-                year = 2025,
-                semester = "SPRING"
-            )
+            val timetable =
+                dataGenerator.generateTimetable(
+                    user = user,
+                    year = 2025,
+                    semester = "SPRING",
+                )
 
-            val mismatchedYearLecture = dataGenerator.generateLecture(
-                year = 2024,
-                semester = "SPRING"
-            )
+            val mismatchedYearLecture =
+                dataGenerator.generateLecture(
+                    year = 2024,
+                    semester = "SPRING",
+                )
 
-            val mismatchedSemesterLecture = dataGenerator.generateLecture(
-                year = 2025,
-                semester = "AUTUMN"
-            )
+            val mismatchedSemesterLecture =
+                dataGenerator.generateLecture(
+                    year = 2025,
+                    semester = "AUTUMN",
+                )
 
             val request1 = AddLectureRequest(lectureId = mismatchedYearLecture.id!!)
             val request2 = AddLectureRequest(lectureId = mismatchedSemesterLecture.id!!)
 
-            mvc.perform(
-                post("/api/v1/timetable/{id}/lectures", timetable.id)
-                    .header("Authorization", "Bearer $token")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request1))
-            )
-                .andExpect(status().isBadRequest) // 400 (e.g., TimetableSemesterMismatchException)
+            mvc
+                .perform(
+                    post("/api/v1/timetable/{id}/lectures", timetable.id)
+                        .header("Authorization", "Bearer $token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request1)),
+                ).andExpect(status().isBadRequest) // 400 (e.g., TimetableSemesterMismatchException)
 
-            mvc.perform(
-                post("/api/v1/timetable/{id}/lectures", timetable.id)
-                    .header("Authorization", "Bearer $token")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(mapper.writeValueAsString(request2))
-            )
-                .andExpect(status().isBadRequest) // 400
+            mvc
+                .perform(
+                    post("/api/v1/timetable/{id}/lectures", timetable.id)
+                        .header("Authorization", "Bearer $token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request2)),
+                ).andExpect(status().isBadRequest) // 400
         }
     }
