@@ -45,3 +45,31 @@ class TimetableUpdateForbiddenException :
         httpStatusCode = HttpStatus.FORBIDDEN,
         msg = "You don't have permission to update this timetable",
     )
+
+class TimetableDuplicateTimeException :
+    TimetableException(
+        errorCode = 0,
+        httpStatusCode = HttpStatus.BAD_REQUEST,
+        msg = "Timetable time already exists.",
+    )
+
+class LectureNotFoundException :
+    TimetableException(
+        errorCode = 0,
+        httpStatusCode = HttpStatus.BAD_REQUEST,
+        msg = "Lecture not found",
+    )
+
+class TimetableDuplicateLectureException :
+    TimetableException(
+        errorCode = 0,
+        httpStatusCode = HttpStatus.BAD_REQUEST,
+        msg = "Lecture already exists.",
+    )
+
+class TimetableLectureNotFoundException:
+    TimetableException(
+        errorCode = 0,
+        httpStatusCode = HttpStatus.BAD_REQUEST,
+        msg = "Lecture does not exist in this timetable",
+    )

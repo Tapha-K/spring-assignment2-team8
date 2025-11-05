@@ -1,10 +1,12 @@
 package com.wafflestudio.spring2025.timetable.controller
 
+import com.wafflestudio.spring2025.timetable.dto.AddLectureRequest
 import com.wafflestudio.spring2025.timetable.dto.CreateTimetableRequest
 import com.wafflestudio.spring2025.timetable.dto.UpdateTimetableRequest
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableDto
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableWithLectures
 import com.wafflestudio.spring2025.timetable.enum.Semester
+import com.wafflestudio.spring2025.timetable.model.Timetable
 import com.wafflestudio.spring2025.timetable.service.TimetableService
 import com.wafflestudio.spring2025.user.LoggedInUser
 import com.wafflestudio.spring2025.user.model.User
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import kotlin.Long
 
 @RestController
 class TimetableController(
@@ -77,4 +80,30 @@ class TimetableController(
         timetableService.delete(id, user)
         return ResponseEntity.noContent().build()
     }
+
+    @PostMapping("/api/v1/timetable/{id}/lectures")
+    fun addLecture(
+        @PathVariable id: Long,
+        @LoggedInUser user: User,
+        @RequestBody request: AddLectureRequest
+    ): ResponseEntity<TimetableDto> {
+        val updatedTimetable = timetableService.addLecture(
+            timetableId = id,
+            lectureId = request.lectureId,
+            user = user
+        )
+        return ResponseEntity.ok(updatedTimetable)
+    }
+
+    @DeleteMapping("/api/v1/timetable/{timetableId}/lectures/{lectureId}")
+    fun deleteLecture(
+        @PathVariable timetableId: Long,
+        @LoggedInUser user: User,
+        @PathVariable lectureId: Long,
+    ): ResponseEntity<Void> {
+        timetableService.deleteLecture(timetableId, user, lectureId)
+        return ResponseEntity.noContent().build()
+    }
+
+
 }

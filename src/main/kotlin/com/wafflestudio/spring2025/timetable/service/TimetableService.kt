@@ -1,19 +1,26 @@
 package com.wafflestudio.spring2025.timetable.service
 
+import com.wafflestudio.spring2025.timetable.LectureNotFoundException
 import com.wafflestudio.spring2025.timetable.TimetableBlankTitleException
+import com.wafflestudio.spring2025.timetable.TimetableDuplicateLectureException
+import com.wafflestudio.spring2025.timetable.TimetableDuplicateTimeException
 import com.wafflestudio.spring2025.timetable.TimetableDuplicateTitleException
+import com.wafflestudio.spring2025.timetable.TimetableLectureNotFoundException
 import com.wafflestudio.spring2025.timetable.TimetableNotFoundException
 import com.wafflestudio.spring2025.timetable.TimetableUpdateForbiddenException
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableDto
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableWithLectures
 import com.wafflestudio.spring2025.timetable.enum.Semester
+import com.wafflestudio.spring2025.timetable.model.Lecture
 import com.wafflestudio.spring2025.timetable.model.Timetable
+import com.wafflestudio.spring2025.timetable.model.TimetableLecture
 import com.wafflestudio.spring2025.timetable.repository.LectureRepository
 import com.wafflestudio.spring2025.timetable.repository.TimetableLectureRepository
 import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
 import com.wafflestudio.spring2025.user.model.User
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import java.time.LocalTime
 
 @Service
 class TimetableService(
@@ -96,4 +103,90 @@ class TimetableService(
 
         timetableRepository.delete(timetable)
     }
+
+    fun addLecture(
+        timetableId: Long,
+        user: User,
+        lectureId: Long,
+    ): TimetableDto {
+        val timetable = timetableRepository.findByIdOrNull(timetableId) ?: throw TimetableNotFoundException()
+        val lecture = lectureRepository.findByIdOrNull(lectureId) ?: throw LectureNotFoundException()
+
+        if (timetable.userId != user.id) {
+            throw TimetableUpdateForbiddenException()
+        }
+
+        val existingLectureIds =
+            timetableLectureRepository.findLectureIdsByTimetableId(timetableId)
+
+        if (lectureId in existingLectureIds) {
+            throw TimetableDuplicateLectureException()
+        }
+
+        val existingLectures = lectureRepository.findAllById(existingLectureIds)
+        val hasConflict = existingLectures.any { existing ->
+            isTimeOverlapping(existing, lecture)
+        }
+        if (hasConflict) {
+            throw TimetableDuplicateTimeException()
+        }
+
+        timetableLectureRepository.save(
+            TimetableLecture(
+                timetableId = timetableId,
+                lectureId = lectureId,
+            )
+        )
+
+        return TimetableDto(timetable, user)
+    }
+
+    private fun isTimeOverlapping(a: Lecture, b: Lecture): Boolean {
+        val aTimes = a.lectureTimes
+        val bTimes = b.lectureTimes
+
+        return aTimes.any { ta ->
+            bTimes.any { tb ->
+                ta.dayOfWeek == tb.dayOfWeek &&
+                        overlaps(ta.startTime, ta.endTime, tb.startTime, tb.endTime)
+            }
+        }
+    }
+
+    private fun overlaps(s1: Int, e1: Int, s2: Int, e2: Int): Boolean {
+        val start1 = toLocalTime(s1)
+        val end1 = toLocalTime(e1)
+        val start2 = toLocalTime(s2)
+        val end2 = toLocalTime(e2)
+        return start1 < end2 && start2 < end1
+    }
+
+    private fun toLocalTime(timeInt: Int): LocalTime {
+        val hour = timeInt / 100
+        val minute = timeInt % 100
+        return LocalTime.of(hour, minute)
+    }
+
+    fun deleteLecture(
+        timetableId: Long,
+        user: User,
+        lectureId: Long,
+    ){
+        val timetable = timetableRepository.findByIdOrNull(timetableId) ?: throw TimetableNotFoundException()
+
+        if (timetable.userId != user.id) {
+            throw TimetableUpdateForbiddenException()
+        }
+
+        val existingLectureIds = timetableLectureRepository.findLectureIdsByTimetableId(timetableId)
+        if (lectureId !in existingLectureIds) {
+            throw TimetableLectureNotFoundException()
+        }
+
+        timetableLectureRepository.deleteByTimetableIdAndLectureId(timetableId, lectureId)
+    }
+
+
+
 }
+

@@ -10,4 +10,10 @@ interface TimetableLectureRepository : CrudRepository<TimetableLecture, Long> {
     fun findLectureIdsByTimetableId(
         @Param("tid") timetableId: Long,
     ): List<Long>
+
+    @Query("DELETE FROM timetable_lecture WHERE timetable_id = :tid AND lecture_id = :lid")
+    fun deleteByTimetableIdAndLectureId(
+        @Param("tid") timetableId: Long,
+        @Param("lid") lectureId: Long,
+    )
 }
