@@ -7,6 +7,7 @@ import com.wafflestudio.spring2025.timetable.model.LectureTime
 import com.wafflestudio.spring2025.timetable.repository.LectureRepository
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -185,7 +186,7 @@ class TimetableFetchService(
                 )
             }
 
-        val flux =
+        val buffers =
             webClient
                 .post()
                 .uri(TIMETABLE_SNU_EXCEL_URI)
@@ -193,24 +194,20 @@ class TimetableFetchService(
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
                 .bodyToFlux(DataBuffer::class.java)
-                .map { buffer ->
-                    val bytes = ByteArray(buffer.readableByteCount())
-                    buffer.read(bytes)
-                    bytes
-                }
 
-        val fullBytes =
-            flux
-                .reduce(ByteArray(0)) { acc, chunk ->
-                    acc + chunk
-                }.block()
+        val lectureXls =
+            DataBufferUtils
+                .join(buffers)
+                .block()!!
+                .asInputStream(true)
+                .readAllBytes()
 
         val oldLectures =
             lectureRepository.findAllByYearAndSemester(year, semester.value).associate { lecture ->
                 (lecture.courseNumber + "##" + lecture.lectureNumber) to lecture.id
             }
 
-        val newLectureList = parseLectureXls(year, semester, fullBytes!!)
+        val newLectureList = parseLectureXls(year, semester, lectureXls)
 
         // 있던 강의가 없어질 수도 있나..?
         newLectureList.forEach { lecture ->
