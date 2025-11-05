@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.junit.jupiter.Testcontainers
+import org.assertj.core.api.Assertions.assertThat
 
 // 2차 과제 필요 import
 import com.wafflestudio.spring2025.timetable.dto.AddLectureRequest
@@ -26,6 +27,7 @@ import com.wafflestudio.spring2025.timetable.dto.UpdateTimetableRequest
 import com.wafflestudio.spring2025.timetable.repository.TimetableLectureRepository
 import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
 import com.wafflestudio.spring2025.timetable.enum.Semester
+import com.wafflestudio.spring2025.timetable.repository.LectureRepository
 
 
 @SpringBootTest
@@ -41,7 +43,8 @@ class TimetableIntegrationTest
         private val dataGenerator: DataGenerator,
         private val queryCounter: QueryCounter,
         private val timetableRepository: TimetableRepository,
-        private val timetableLectureRepository: TimetableLectureRepository
+        private val timetableLectureRepository: TimetableLectureRepository,
+        private val lectureRepository: LectureRepository
     ) {
 
         // TDD용 임시 DTO
@@ -175,10 +178,10 @@ class TimetableIntegrationTest
             dataGenerator.generateLecture(2025, "AUTUMN", title = "컴퓨터 프로그래밍", instructor = "C교수")
 
             mvc.perform(
-                get("/api/v1/lectures") // 👈 실제 API 경로
+                get("/api/v1/lectures") // 실제 API 경로
                     .header("Authorization", "Bearer $token")
                     .param("year", "2025")
-                    .param("semester", Semester.SPRING.value.toString()) // 👈 Int 값
+                    .param("semester", Semester.SPRING.value.toString()) // Int 값
                     .param("keyword", "A교수") // A교수로 검색
             )
                 .andExpect(status().isOk)
@@ -258,7 +261,7 @@ class TimetableIntegrationTest
             dataGenerator.addLectureToTimetable(timetable, lecture) // 미리 추가
 
             mvc.perform(
-                delete("/api/v1/timetable/{timetableId}/lectures/{lectureId}", timetable.id, lecture.id) // 👈 실제 API 경로
+                delete("/api/v1/timetable/{timetableId}/lectures/{lectureId}", timetable.id, lecture.id) // 실제 API 경로
                     .header("Authorization", "Bearer $token")
             )
                 .andExpect(status().isNoContent) // 204
@@ -287,9 +290,35 @@ class TimetableIntegrationTest
         }
 
         @Test
-        @Disabled("곧 안내드리겠습니다")
+        @Disabled
         fun `should fetch and save course information from SNU course registration site`() {
             // 서울대 수강신청 사이트에서 강의 정보를 가져와 저장할 수 있다
+
+            // POST /api/v1/timetable/fetch API가 TimetableController에 구현될 때까지 실패
+            val (user, token) = dataGenerator.generateUser()
+
+            // 실제 데이터가 있는 과거 년/학기로 테스트 (e.g., 2024년 2학기)
+            val testYear = 2024
+            val testSemester = Semester.AUTUMN
+
+            // API 호출 전, 해당 학기 강의가 DB에 없는지 확인
+            val lecturesBefore = lectureRepository.findAllByYearAndSemester(testYear, testSemester.value)
+            assertThat(lecturesBefore).isEmpty()
+
+            // TimetableController에 새로 만들고 내부적으로 timetableFetchService.fetchLectures를 호출하길 기대
+            mvc.perform(
+                post("/api/v1/timetable/fetch")
+                    .header("Authorization", "Bearer $token")
+                    .param("year", testYear.toString())
+                    .param("semester", testSemester.name) // "AUTUMN" 같은 Enum 이름
+            )
+                .andExpect(status().isOk)
+
+            // API 호출 후, 강의가 DB에 저장되었는지 확인
+            val lecturesAfter = lectureRepository.findAllByYearAndSemester(testYear, testSemester.value)
+            assertThat(lecturesAfter).isNotEmpty
+            assertThat(lecturesAfter.first().year).isEqualTo(testYear)
+            assertThat(lecturesAfter.first().semester).isEqualTo(testSemester.value)
         }
 
         @Test
