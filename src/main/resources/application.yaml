@@ -11,6 +11,9 @@ jwt:
   secret: this-is-a-very-long-and-secure-secret-key-for-jwt-token-generation
   expiration-in-ms: 86400000
 
+snusugang:
+  refresh: "0 0 3 * * *"
+
 logging:
   level:
     org:
