@@ -161,9 +161,9 @@ class TimetableService(
         return start1 < end2 && start2 < end1
     }
 
-    private fun toLocalTime(timeInt: Int): LocalTime {
-        val hour = timeInt / 100
-        val minute = timeInt % 100
+    private fun toLocalTime(minutesSinceMidnight: Int): LocalTime {
+        val hour = minutesSinceMidnight / 60
+        val minute = minutesSinceMidnight % 60
         return LocalTime.of(hour, minute)
     }
 
