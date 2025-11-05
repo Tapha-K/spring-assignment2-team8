@@ -8,6 +8,7 @@ import com.wafflestudio.spring2025.timetable.TimetableDuplicateTitleException
 import com.wafflestudio.spring2025.timetable.TimetableLectureNotFoundException
 import com.wafflestudio.spring2025.timetable.TimetableNotFoundException
 import com.wafflestudio.spring2025.timetable.TimetableUpdateForbiddenException
+import com.wafflestudio.spring2025.timetable.TimetableWrongSemesterException
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableDto
 import com.wafflestudio.spring2025.timetable.dto.core.TimetableWithLectures
 import com.wafflestudio.spring2025.timetable.enum.Semester
@@ -116,6 +117,10 @@ class TimetableService(
             throw TimetableUpdateForbiddenException()
         }
 
+        if (timetable.year != lecture.year || timetable.semester != lecture.semester) {
+            throw TimetableWrongSemesterException()
+        }
+
         val existingLectureIds =
             timetableLectureRepository.findLectureIdsByTimetableId(timetableId)
 
@@ -154,17 +159,8 @@ class TimetableService(
     }
 
     private fun overlaps(s1: Int, e1: Int, s2: Int, e2: Int): Boolean {
-        val start1 = toLocalTime(s1)
-        val end1 = toLocalTime(e1)
-        val start2 = toLocalTime(s2)
-        val end2 = toLocalTime(e2)
-        return start1 < end2 && start2 < end1
-    }
 
-    private fun toLocalTime(timeInt: Int): LocalTime {
-        val hour = timeInt / 100
-        val minute = timeInt % 100
-        return LocalTime.of(hour, minute)
+        return s1 < e2 && s2 < e1
     }
 
     fun deleteLecture(

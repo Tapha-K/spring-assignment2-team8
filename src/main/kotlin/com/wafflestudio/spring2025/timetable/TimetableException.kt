@@ -73,3 +73,10 @@ class TimetableLectureNotFoundException:
         httpStatusCode = HttpStatus.BAD_REQUEST,
         msg = "Lecture does not exist in this timetable",
     )
+
+class TimetableWrongSemesterException:
+    TimetableException(
+        errorCode = 0,
+        httpStatusCode = HttpStatus.BAD_REQUEST,
+        msg = "Semester does not match",
+    )
