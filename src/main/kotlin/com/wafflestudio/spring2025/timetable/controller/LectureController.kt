@@ -7,12 +7,16 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 
+@Tag(name = "강의 API", description = "강의 검색 및 조회 API")
 @RestController
 @RequestMapping("/api/v1/lectures")
 class LectureController(
     private val lectureService: LectureService,
 ) {
+    @Operation(summary = "강의 검색", description = "연도, 학기, 키워드(강의명/교수명)로 강의 검색 (페이지네이션)")
     @GetMapping
     fun searchLectures(
         @RequestParam year: Int,

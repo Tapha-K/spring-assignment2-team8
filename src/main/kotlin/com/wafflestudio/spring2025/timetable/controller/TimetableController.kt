@@ -19,11 +19,15 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import kotlin.Long
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 
+@Tag(name = "시간표 API", description = "시간표 생성, 조회, 수정, 삭제 및 강의 추가/삭제 API")
 @RestController
 class TimetableController(
     private val timetableService: TimetableService,
 ) {
+    @Operation(summary = "시간표 생성", description = "새로운 시간표 생성")
     @PostMapping("/api/v1/timetable/create")
     fun create(
         @LoggedInUser user: User,
@@ -39,6 +43,7 @@ class TimetableController(
         return ResponseEntity.ok(timetableDto)
     }
 
+    @Operation(summary = "시간표 목록 조회", description = "현재 로그인한 유저의 모든 시간표 목록 조회")
     @GetMapping("/api/v1/timetable/list")
     fun list(
         @LoggedInUser user: User,
@@ -47,6 +52,7 @@ class TimetableController(
         return ResponseEntity.ok(timetableDtoList)
     }
 
+    @Operation(summary = "시간표 상세 조회", description = "특정 시간표의 상세 정보(강의 포함) 조회")
     @GetMapping("/api/v1/timetable/{id}")
     fun get(
         @PathVariable id: Long,
@@ -56,6 +62,7 @@ class TimetableController(
         return ResponseEntity.ok(timetable)
     }
 
+    @Operation(summary = "시간표 이름 수정", description = "특정 시간표의 이름 수정 (작성자 본인만 가능)")
     @PatchMapping("/api/v1/timetable/{id}")
     fun update(
         @PathVariable id: Long,
@@ -72,6 +79,7 @@ class TimetableController(
         return ResponseEntity.ok(timetableDto)
     }
 
+    @Operation(summary = "시간표 삭제", description = "특정 시간표를 삭제 (작성자 본인만 가능)")
     @DeleteMapping("/api/v1/timetable/{id}")
     fun delete(
         @PathVariable id: Long,
@@ -81,6 +89,7 @@ class TimetableController(
         return ResponseEntity.noContent().build()
     }
 
+    @Operation(summary = "시간표에 강의 추가", description = "특정 시간표에 강의 추가 (시간 중복, 학기 일치 검사 포함)")
     @PostMapping("/api/v1/timetable/{id}/lectures")
     fun addLecture(
         @PathVariable id: Long,
@@ -95,6 +104,7 @@ class TimetableController(
         return ResponseEntity.ok(updatedTimetable)
     }
 
+    @Operation(summary = "시간표에서 강의 삭제", description = "특정 시간표에서 특정 강의 삭제 (작성자 본인만 가능)")
     @DeleteMapping("/api/v1/timetable/{timetableId}/lectures/{lectureId}")
     fun deleteLecture(
         @PathVariable timetableId: Long,

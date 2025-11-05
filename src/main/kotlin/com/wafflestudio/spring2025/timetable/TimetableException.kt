@@ -78,5 +78,5 @@ class TimetableWrongSemesterException:
     TimetableException(
         errorCode = 0,
         httpStatusCode = HttpStatus.BAD_REQUEST,
-        msg = "Semester does not match",
+        msg = "Timetable's year or semester does not match the lecture's.",
     )

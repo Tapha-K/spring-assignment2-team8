@@ -28,6 +28,7 @@ import com.wafflestudio.spring2025.timetable.repository.TimetableLectureReposito
 import com.wafflestudio.spring2025.timetable.repository.TimetableRepository
 import com.wafflestudio.spring2025.timetable.enum.Semester
 import com.wafflestudio.spring2025.timetable.repository.LectureRepository
+import com.wafflestudio.spring2025.timetable.TimetableScheduler
 
 
 @SpringBootTest
@@ -44,7 +45,8 @@ class TimetableIntegrationTest
         private val queryCounter: QueryCounter,
         private val timetableRepository: TimetableRepository,
         private val timetableLectureRepository: TimetableLectureRepository,
-        private val lectureRepository: LectureRepository
+        private val lectureRepository: LectureRepository,
+        private val timetableScheduler: TimetableScheduler
     ) {
 
         // TDD용 임시 DTO
@@ -290,31 +292,21 @@ class TimetableIntegrationTest
         }
 
         @Test
-        @Disabled
         fun `should fetch and save course information from SNU course registration site`() {
             // 서울대 수강신청 사이트에서 강의 정보를 가져와 저장할 수 있다
+            val testYear = 2025
+            val testSemester = Semester.SPRING
 
-            // POST /api/v1/timetable/fetch API가 TimetableController에 구현될 때까지 실패
-            val (user, token) = dataGenerator.generateUser()
+            // @PostConstruct가 저장한 데이터를 테스트 시작 전에 삭제
+            lectureRepository.deleteAll(
+                lectureRepository.findAllByYearAndSemester(testYear, testSemester.value)
+            )
 
-            // 실제 데이터가 있는 과거 년/학기로 테스트 (e.g., 2024년 2학기)
-            val testYear = 2024
-            val testSemester = Semester.AUTUMN
-
-            // API 호출 전, 해당 학기 강의가 DB에 없는지 확인
             val lecturesBefore = lectureRepository.findAllByYearAndSemester(testYear, testSemester.value)
             assertThat(lecturesBefore).isEmpty()
 
-            // TimetableController에 새로 만들고 내부적으로 timetableFetchService.fetchLectures를 호출하길 기대
-            mvc.perform(
-                post("/api/v1/timetable/fetch")
-                    .header("Authorization", "Bearer $token")
-                    .param("year", testYear.toString())
-                    .param("semester", testSemester.name) // "AUTUMN" 같은 Enum 이름
-            )
-                .andExpect(status().isOk)
+            timetableScheduler.runCrawl()
 
-            // API 호출 후, 강의가 DB에 저장되었는지 확인
             val lecturesAfter = lectureRepository.findAllByYearAndSemester(testYear, testSemester.value)
             assertThat(lecturesAfter).isNotEmpty
             assertThat(lecturesAfter.first().year).isEqualTo(testYear)
@@ -378,5 +370,47 @@ class TimetableIntegrationTest
             )
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$", hasSize<Any>(5))) // 나머지 5개
+        }
+
+    // 추가 테스트
+    @Test
+    fun `should return error when adding lecture with mismatched semester or year`() {
+            // 시간표와 강의의 년도/학기가 다르면 강의를 등록할 수 없다
+            val (user, token) = dataGenerator.generateUser()
+
+            val timetable = dataGenerator.generateTimetable(
+                user = user,
+                year = 2025,
+                semester = "SPRING"
+            )
+
+            val mismatchedYearLecture = dataGenerator.generateLecture(
+                year = 2024,
+                semester = "SPRING"
+            )
+
+            val mismatchedSemesterLecture = dataGenerator.generateLecture(
+                year = 2025,
+                semester = "AUTUMN"
+            )
+
+            val request1 = AddLectureRequest(lectureId = mismatchedYearLecture.id!!)
+            val request2 = AddLectureRequest(lectureId = mismatchedSemesterLecture.id!!)
+
+            mvc.perform(
+                post("/api/v1/timetable/{id}/lectures", timetable.id)
+                    .header("Authorization", "Bearer $token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(request1))
+            )
+                .andExpect(status().isBadRequest) // 400 (e.g., TimetableSemesterMismatchException)
+
+            mvc.perform(
+                post("/api/v1/timetable/{id}/lectures", timetable.id)
+                    .header("Authorization", "Bearer $token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(request2))
+            )
+                .andExpect(status().isBadRequest) // 400
         }
     }

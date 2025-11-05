@@ -17,12 +17,16 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 
+@Tag(name = "댓글 API", description = "게시글의 댓글 생성, 조회, 수정, 삭제 API")
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
 class CommentController(
     private val commentService: CommentService,
 ) {
+    @Operation(summary = "댓글 목록 조회", description = "특정 게시글의 모든 댓글 조회")
     @GetMapping
     fun list(
         @PathVariable postId: Long,
@@ -31,6 +35,7 @@ class CommentController(
         return ResponseEntity.ok(comments)
     }
 
+    @Operation(summary = "댓글 생성", description = "특정 게시글에 댓글 작성")
     @PostMapping
     fun create(
         @PathVariable postId: Long,
@@ -46,6 +51,7 @@ class CommentController(
         return ResponseEntity.ok(comment)
     }
 
+    @Operation(summary = "댓글 수정", description = "특정 댓글의 내용 수정 (작성자 본인만 가능)")
     @PutMapping("/{id}")
     fun update(
         @PathVariable postId: Long,
@@ -63,6 +69,7 @@ class CommentController(
         return ResponseEntity.ok(comment)
     }
 
+    @Operation(summary = "댓글 삭제", description = "특정 댓글 삭제 (작성자 본인만 가능)")
     @DeleteMapping("/{id}")
     fun delete(
         @PathVariable postId: Long,
